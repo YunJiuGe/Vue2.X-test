@@ -4,8 +4,15 @@
       <el-page-header @back="goBack" content="指导文件查看" title="">
       </el-page-header>
     </el-row>
-    <el-row style="background-color: #aaaaaa" type="flex" justify="center">
-      <el-col :span="4"> </el-col>
+    <el-row
+      style="background-color: #aaaaaa; height: 40px"
+      type="flex"
+      justify="center"
+    >
+      <el-col :span="4"
+        ><el-image :src="imgUrl" :fit="'fill'" @click="openWarning('打开扫描')">
+        </el-image
+      ></el-col>
       <el-col :span="18">
         <el-input v-model="form.name" placeholder="请输入设备名称"></el-input>
       </el-col>
@@ -46,6 +53,34 @@
           <el-button type="primary" @click="preview()">预览</el-button>
           <el-button type="primary" @click="downFile()">下载</el-button>
         </div>
+        <div>
+          <el-upload
+            class="upload-demo"
+            ref="upload"
+            action="https://jsonplaceholder.typicode.com/posts/"
+            :on-preview="handlePreview"
+            :on-remove="handleRemove"
+            :before-remove="beforeRemove"
+            :on-exceed="handleExceed"
+            :file-list="file"
+            :auto-upload="false"
+            :limit="1"
+          >
+            <el-button slot="trigger" size="small" type="primary"
+              >选取文件</el-button
+            >
+            <el-button
+              style="margin-left: 10px"
+              size="small"
+              type="success"
+              @click="submitUpload"
+              >上传到服务器</el-button
+            >
+            <div slot="tip" class="el-upload__tip">
+              文件大小不超过500kb
+            </div>
+          </el-upload>
+        </div>
       </el-col>
     </el-row>
     <el-dialog
@@ -58,26 +93,26 @@
       <div>
         <pdf
           :page="pageNum"
-          :src="url"
+          :src="pdfUrl"
           @progress="loadedRatio = $event"
           @num-pages="pageTotalNum = $event"
         ></pdf>
         <div style="text-align: center">
-        <el-button-group>
-          <el-button
-            type="primary"
-            icon="el-icon-arrow-left"
-            size="mini"
-            @click="prePage"
-            >上一页</el-button
-          >
-          <el-button type="primary" size="mini" @click="nextPage"
-            >下一页<i class="el-icon-arrow-right el-icon--right"></i
-          ></el-button>
-        </el-button-group>
-        <div style="margintop: 10px; color: #409eff">
-          {{ pageNum }} / {{ pageTotalNum }}
-        </div>
+          <el-button-group>
+            <el-button
+              type="primary"
+              icon="el-icon-arrow-left"
+              size="mini"
+              @click="prePage"
+              >上一页</el-button
+            >
+            <el-button type="primary" size="mini" @click="nextPage"
+              >下一页<i class="el-icon-arrow-right el-icon--right"></i
+            ></el-button>
+          </el-button-group>
+          <div style="margintop: 10px; color: #409eff">
+            {{ pageNum }} / {{ pageTotalNum }}
+          </div>
         </div>
       </div>
     </el-dialog>
@@ -101,10 +136,12 @@ export default {
         name: ''
       },
       dialogVisible: false,
-      url: null,
+      imgUrl: 'static/img/tiaoma.png',
+      pdfUrl: null,
       pageNum: 1,
       pageTotalNum: 1,
-      loadedRatio: 0
+      loadedRatio: 0,
+      file: []
     }
   },
   methods: {
@@ -140,7 +177,7 @@ export default {
       this.tableData = data.data()
     },
     // 提示
-    open3 (text) {
+    openWarning (text) {
       this.$message({
         message: text,
         type: 'warning'
@@ -149,15 +186,35 @@ export default {
     // pdf预览
     preview () {
       if (this.currentRow == null) {
-        this.open3('请选择需要预览的文件')
+        this.openWarning('请选择需要预览的文件')
         return
       }
-      this.url = this.currentRow.filepath
+      this.pdfUrl = this.currentRow.filepath
       this.dialogVisible = true
+    },
+    // 上传
+    submitUpload () {
+      if (this.file == null) {
+        this.openWarning('请选择文件后上传')
+        return
+      }
+      this.$refs.upload.submit()
+    },
+    beforeRemove (file) {
+      return this.$confirm(`确定移除 ${file.name}？`)
+    },
+    handleRemove (file) {
+      console.log(file.name)
+    },
+    handlePreview (file) {
+      console.log(file)
+    },
+    handleExceed () {
+      this.openWarning('只能选择一个文件上传')
     },
     // 下载
     downFile () {
-      console.log(currentRow)
+      console.log(this.currentRow)
     }
   }
 }
