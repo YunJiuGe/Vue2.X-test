@@ -15,3 +15,12 @@ export function get (url: string, data: any) {
     data: data
   })
 }
+
+export function downFile (url: string, data: any) {
+  return Request.axiosInstance({
+    url: url,
+    method: 'post',
+    data: data,
+    responseType: 'blob'
+  })
+}

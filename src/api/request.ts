@@ -14,8 +14,14 @@ export class Request {
     public static init () {
       // 创建axios实例
       this.axiosInstance = axios.create({
-        baseURL: 'http://localhost:9090',
-        timeout: 6000
+        baseURL: 'http://localhost:9090/', // url = base url + request url
+        timeout: 5000
+        // withCredentials: true, // send cookies when cross-domain requests
+        // headers: {
+        //   // clear cors
+        //   'Cache-Control': 'no-cache',
+        //   'Pragma': 'no-cache'
+        // }
       })
       // 初始化拦截器
       this.initInterceptors()

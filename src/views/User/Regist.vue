@@ -29,6 +29,16 @@
           ></el-input>
         </div>
       </el-form-item>
+      <el-form-item label="重复密码" prop="password2">
+        <div class="left">
+          <el-input
+            v-model="form.password2"
+            style="width: 300px"
+            type="password"
+            placeholder="please input your Password"
+          ></el-input>
+        </div>
+      </el-form-item>
       <el-form-item label="昵称" prop="name">
         <div class="left">
           <el-input
@@ -56,8 +66,11 @@
             v-model="form.birthday"
             type="date"
             placeholder="Pick your Birthday"
+            format="yyyy 年 MM 月 dd 日"
+            value-format="yyyy-MM-dd HH:mm:ss"
             style="width: 300px"
-          ></el-date-picker>
+          >
+          </el-date-picker>
         </el-col>
       </el-form-item>
       <el-form-item label="婚否">
@@ -87,10 +100,8 @@
       </el-form-item>
       <el-form-item>
         <div style="margin-left: -120px">
-          <el-button type="primary" @click="onSubmit(form)"
-            >Create</el-button
-          >
-          <el-button @click="resetForm(form)">Reset</el-button>
+          <el-button type="primary" @click="onSubmit(form)">Create</el-button>
+          <el-button @click="reset()">Reset</el-button>
         </div>
       </el-form-item>
     </el-form>
@@ -99,6 +110,7 @@
 
 <script lang="js">
 import { post } from '@/api/api'
+import { openSuccess, openError } from '../common/js/utils.js'
 
 export default {
   data () {
@@ -111,10 +123,18 @@ export default {
         callback(new Error('Please input right phone'))
       }
     }
+    var validatePassword = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('Please input Password'))
+      } else if (!(value === this.form.password)) {
+        callback(new Error('Please input right Password'))
+      }
+    }
     return {
       form: {
         account: '',
         password: '',
+        password2: '',
         name: '',
         sex: '',
         birthday: '',
@@ -150,6 +170,13 @@ export default {
             trigger: 'blur'
           }
         ],
+        password2: [
+          {
+            required: true,
+            trigger: 'blur',
+            validator: validatePassword
+          }
+        ],
         name: [
           {
             required: true,
@@ -158,8 +185,8 @@ export default {
           },
           {
             min: 2,
-            max: 4,
-            message: 'Length should be 2 to 4',
+            max: 8,
+            message: 'Length should be 2 to 8',
             trigger: 'blur'
           }
         ],
@@ -172,7 +199,7 @@ export default {
         ],
         birthday: [
           {
-            type: 'date',
+            type: 'string',
             required: true,
             message: 'Please pick your Birthday',
             trigger: ['blur', 'change']
@@ -202,35 +229,44 @@ export default {
   },
   methods: {
     onSubmit (formName) {
-      console.log(formName)
-      this.$refs.form.validate((valid) => {
-        if (valid) {
-          alert('submit!')
+      let ok = true
+      this.$refs.form.validate((boolean, object) => {
+        if (boolean) {
+          return true
         } else {
-          console.log('error submit!!')
+          ok = false
           return false
         }
       })
-      post(
-        'User/AddUser',
-        JSON.stringify({
-          account: this.form.account,
-          password: this.form.password,
-          deptId: 1,
-          roleId: 1,
-          name: this.form.name,
-          sex: this.form.sex,
-          mobile: this.form.phone,
-          email: this.form.email,
-          createStaff: 1
-        })
-      )
-        .then(function (res) {
-          console.log(res.data)
-        })
-        .catch(function (error) {
-          console.log(error)
-        })
+      if (ok) {
+        post(
+          'user/add',
+          JSON.stringify({
+            account: this.form.account,
+            password: this.form.password,
+            password2: this.form.password2,
+            birthDate: this.form.birthday,
+            name: this.form.name,
+            sex: this.form.sex,
+            phone: this.form.phone,
+            email: this.form.email,
+            marriage: this.form.marriage
+          })
+        )
+          .then((res) => {
+            if (res.data.code === '200') {
+              openSuccess('注册成功')
+            } else {
+              openError('出现错误')
+            }
+          })
+          .catch(function (error) {
+            console.log(error)
+          })
+      }
+    },
+    reset () {
+      this.$refs.form.resetFields()
     }
   }
 }

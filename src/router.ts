@@ -22,6 +22,11 @@ export default new Router({
       path: '/Guid',
       name: 'Guid',
       component: () => import('@/views/company/equipment/GuidanceFile.vue')
+    },
+    {
+      name: 'scanCodePage',
+      path: '/scanCodePage',
+      component: () => import('@/views/common/views/scanCodePage.vue')
     }
   ]
 })

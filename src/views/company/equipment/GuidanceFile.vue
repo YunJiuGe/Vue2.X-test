@@ -10,7 +10,7 @@
       justify="center"
     >
       <el-col :span="4"
-        ><el-image :src="imgUrl" :fit="'fill'" @click="openWarning('打开扫描')">
+        ><el-image :src="imgUrl" :fit="'fill'" @click="scanCode()">
         </el-image
       ></el-col>
       <el-col :span="18">
@@ -60,6 +60,7 @@
             action="https://jsonplaceholder.typicode.com/posts/"
             :on-preview="handlePreview"
             :on-remove="handleRemove"
+            :on-success="handlesuccess"
             :before-remove="beforeRemove"
             :on-exceed="handleExceed"
             :file-list="file"
@@ -76,9 +77,7 @@
               @click="submitUpload"
               >上传到服务器</el-button
             >
-            <div slot="tip" class="el-upload__tip">
-              文件大小不超过500kb
-            </div>
+            <div slot="tip" class="el-upload__tip">文件大小不超过500kb</div>
           </el-upload>
         </div>
       </el-col>
@@ -120,9 +119,10 @@
 </template>
 
 <script lang="js">
-import { post } from '@/api/api'
+import { post, downFile } from '@/api/api'
 import data from './data'
 import pdf from 'vue-pdf'
+import { openWarning, openError, openSuccess } from '../../common/js/utils.js'
 
 export default {
   components: {
@@ -145,6 +145,12 @@ export default {
     }
   },
   methods: {
+    scanCode () {
+      console.log('浏览器信息', navigator.userAgent)
+      this.$router.push({
+        path: '/scanCodePage'
+      })
+    },
     // 上一页
     prePage () {
       let page = this.pageNum
@@ -176,17 +182,10 @@ export default {
         })
       this.tableData = data.data()
     },
-    // 提示
-    openWarning (text) {
-      this.$message({
-        message: text,
-        type: 'warning'
-      })
-    },
     // pdf预览
     preview () {
       if (this.currentRow == null) {
-        this.openWarning('请选择需要预览的文件')
+        openWarning('请选择需要预览的文件')
         return
       }
       this.pdfUrl = this.currentRow.filepath
@@ -194,8 +193,8 @@ export default {
     },
     // 上传
     submitUpload () {
-      if (this.file == null) {
-        this.openWarning('请选择文件后上传')
+      if (this.file.length === 0) {
+        openWarning('请选择文件后上传')
         return
       }
       this.$refs.upload.submit()
@@ -210,11 +209,49 @@ export default {
       console.log(file)
     },
     handleExceed () {
-      this.openWarning('只能选择一个文件上传')
+      openWarning('只能选择一个文件上传')
+    },
+    handlesuccess (response, file, fileList) {
+    // response即为后台返回的全部内容
+      if (response.success === 1) {
+        openSuccess('解析成功')
+      } else {
+        openError('解析失败')
+      }
     },
     // 下载
     downFile () {
-      console.log(this.currentRow)
+      if (this.currentRow === null) {
+        openWarning('请选择要下载的文件')
+        return
+      }
+      downFile('user/downFile', JSON.stringify({ path: this.currentRow.filepath }))
+        .then((res) => {
+          let fileName = this.currentRow.fileName + '.' + this.currentRow.fileType
+          if (res.headers['content-length'] !== '0') {
+            this.downloadFile(res.data, fileName)
+          } else {
+            openWarning('未找到文件')
+          }
+        })
+    },
+    downloadFile (content, fileName) {
+      (fileName && fileName.indexOf('.') !== -1) && (fileName = fileName.slice(0, fileName.indexOf('.')))
+      const blob = new Blob([content], {
+        type: content.type
+      })
+      if ('download' in document.createElement('a') && navigator.userAgent.indexOf('Edge') <= -1) { // 非IE 及edge下载
+        const elink = document.createElement('a')
+        fileName && (elink.download = fileName)
+        elink.style.display = 'none'
+        elink.href = URL.createObjectURL(blob)
+        document.body.appendChild(elink)
+        elink.click()
+        URL.revokeObjectURL(elink.href) // 释放URL 对象
+        document.body.removeChild(elink)
+      } else { // IE10+下载
+        fileName ? navigator.msSaveOrOpenBlob(blob, fileName) : navigator.msSaveOrOpenBlob(blob)
+      }
     }
   }
 }

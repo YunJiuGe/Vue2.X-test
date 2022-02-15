@@ -2,8 +2,8 @@ const data = [
   {
     name: '清洗机',
     fileName: '清洗机维修指南',
-    fileType: 'PDF',
-    filepath: 'static/pdfFile/2.pdf'
+    fileType: 'txt',
+    filepath: 'D:/测试.txt'
   },
   {
     name: '缸体机床',
